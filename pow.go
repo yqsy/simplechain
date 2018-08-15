@@ -36,8 +36,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 		[][]byte{
 			pow.block.PrevBlockHash,
 			pow.block.Data,
-			// 时间戳int64转换成大端法再hash? TODO
-			IntToHex(pow.block.TimeStamp),
+			IntToHex(pow.block.TimeStamp), // 时间戳int64转换成大端法再hash? TODO
 			IntToHex(int64(targetBits)),
 			IntToHex(int64(nonce)),
 		},

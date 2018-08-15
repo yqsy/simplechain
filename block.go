@@ -8,14 +8,14 @@ import (
 )
 
 type Block struct {
-	// 先前块的hash
-	PrevBlockHash []byte
+	// 区块创建的时间戳
+	TimeStamp int64
 
 	// 区块存储的数据
 	Data []byte
 
-	// 区块创建的时间戳
-	TimeStamp int64
+	// 先前块的hash
+	PrevBlockHash []byte
 
 	// 当前区块的hash
 	Hash []byte
@@ -29,12 +29,13 @@ func (b *Block) SetHash() {
 	b.Hash = hash[:]
 }
 
-func NewBlock(data string, preBlockHash []byte) *Block {
+func NewBlock(data string, prevBlockHash []byte) *Block {
 	block := &Block{
-		PrevBlockHash: preBlockHash,
-		Data:          []byte(data),
 		TimeStamp:     time.Now().Unix(),
+		Data:          []byte(data),
+		PrevBlockHash: prevBlockHash,
 	}
 	block.SetHash()
 	return block
 }
+
