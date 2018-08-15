@@ -22,7 +22,7 @@ type ProofOfWork struct {
 	target *big.Int
 }
 
-func NewProofWork(b *Block) *ProofOfWork {
+func NewProofOfWork(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-targetBits))
 
@@ -71,4 +71,16 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 	fmt.Print("\n\n")
 	return nonce, hash[:]
+}
+
+func (pow *ProofOfWork) Validate() bool {
+	var hashInt big.Int
+
+	data := pow.prepareData(pow.block.Nonce)
+	hash := sha256.Sum256(data)
+	hashInt.SetBytes(hash[:])
+
+	isValid := hashInt.Cmp(pow.target) == -1
+
+	return isValid
 }

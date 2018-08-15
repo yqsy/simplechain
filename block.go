@@ -1,9 +1,6 @@
 package simplechain
 
 import (
-	"strconv"
-	"bytes"
-	"crypto/sha256"
 	"time"
 )
 
@@ -19,23 +16,29 @@ type Block struct {
 
 	// 当前区块的hash
 	Hash []byte
-}
 
-func (b *Block) SetHash() {
-	// 时间戳int64转换成字符串再hash? TODO
-	timestamp := []byte(strconv.FormatInt(b.TimeStamp, 10))
-	headers := bytes.Join([][]byte{b.PrevBlockHash, b.Data, timestamp}, []byte{})
-	hash := sha256.Sum256(headers)
-	b.Hash = hash[:]
+	// 随机数 (放在一起hash计算)
+	Nonce int
 }
 
 func NewBlock(data string, prevBlockHash []byte) *Block {
 	block := &Block{
 		TimeStamp:     time.Now().Unix(),
-		Data:          []byte(data),
+		Data:          []byte (data),
 		PrevBlockHash: prevBlockHash,
+		Hash:          []byte{},
+		Nonce:         0,
 	}
-	block.SetHash()
+
+	pow := NewProofOfWork(block)
+	nonce, hash := pow.Run()
+
+	block.Hash = hash[:]
+	block.Nonce = nonce
+
 	return block
 }
 
+func NewGenesisBlock() *Block {
+	return NewBlock("Genesis Block", []byte{})
+}
