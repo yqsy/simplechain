@@ -1,9 +1,10 @@
-package simplechain
+package main
 
 import (
 	"time"
 	"bytes"
 	"encoding/gob"
+	"fmt"
 )
 
 type Block struct {
@@ -21,6 +22,16 @@ type Block struct {
 
 	// 随机数 (放在一起hash计算)
 	Nonce int
+}
+
+func (b *Block) String() string {
+	var result string
+	result += fmt.Sprintf("Prev.Hash: %x\n", b.PrevBlockHash)
+	result += fmt.Sprintf("Data: %s\n", b.Data)
+	result += fmt.Sprintf("TimeStamp: %s\n", time.Unix(b.TimeStamp, 0).Format(time.RFC822))
+	result += fmt.Sprintf("Hash: %x\n", b.Hash)
+	result += fmt.Sprintf("Nonce: %d\n", b.Nonce)
+	return result
 }
 
 func (b *Block) Serialize() ([]byte, error) {

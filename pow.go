@@ -1,4 +1,4 @@
-package simplechain
+package main
 
 import (
 	"math/big"

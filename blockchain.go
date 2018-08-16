@@ -1,4 +1,4 @@
-package simplechain
+package main
 
 import (
 	"github.com/boltdb/bolt"
@@ -22,9 +22,13 @@ type BlockChainIterator struct {
 	db          *bolt.DB
 }
 
-// 获取当前的block,并向前迭代
+// 获取当前的block,并向前迭代(重置currentHash)
 func (bci *BlockChainIterator) Next() *Block {
 	var block *Block
+
+	if len(bci.currentHash) == 0 {
+		return nil
+	}
 
 	err := bci.db.View(func(tx *bolt.Tx) error {
 		// 取出currentHash的结构体
