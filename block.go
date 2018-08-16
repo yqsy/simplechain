@@ -5,14 +5,15 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"crypto/sha256"
 )
 
 type Block struct {
 	// 区块创建的时间戳
 	TimeStamp int64
 
-	// 区块存储的数据
-	Data []byte
+	// 交易数据
+	Transactions []*Transaction
 
 	// 先前块的hash
 	PrevBlockHash []byte
@@ -27,7 +28,7 @@ type Block struct {
 func (b *Block) String() string {
 	var result string
 	result += fmt.Sprintf("Prev.Hash: %x\n", b.PrevBlockHash)
-	result += fmt.Sprintf("Data: %s\n", b.Data)
+	// result += fmt.Sprintf("Data: %s\n", b.Data) TODO
 	result += fmt.Sprintf("TimeStamp: %s\n", time.Unix(b.TimeStamp, 0).Format(time.RFC822))
 	result += fmt.Sprintf("Hash: %x\n", b.Hash)
 	result += fmt.Sprintf("Nonce: %d\n", b.Nonce)
@@ -41,6 +42,19 @@ func (b *Block) Serialize() ([]byte, error) {
 	return result.Bytes(), err
 }
 
+func (b *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.Id)
+	}
+
+	joined := bytes.Join(txHashes, []byte{})
+	txHash = sha256.Sum256(joined)
+	return txHash[:]
+}
+
 func DeserializeBlock(d []byte) (*Block, error) {
 	var block Block
 	decoder := gob.NewDecoder(bytes.NewReader(d))
@@ -48,10 +62,10 @@ func DeserializeBlock(d []byte) (*Block, error) {
 	return &block, err
 }
 
-func NewBlock(data string, prevBlockHash []byte) *Block {
+func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	block := &Block{
 		TimeStamp:     time.Now().Unix(),
-		Data:          []byte (data),
+		Transactions:  transactions,
 		PrevBlockHash: prevBlockHash,
 		Hash:          []byte{},
 		Nonce:         0,
@@ -66,6 +80,6 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 	return block
 }
 
-func NewGenesisBlock() *Block {
-	return NewBlock("Genesis Block", []byte{})
+func NewGenesisBlock(coinbase *Transaction) *Block {
+	return NewBlock([]*Transaction{coinbase}, []byte{})
 }

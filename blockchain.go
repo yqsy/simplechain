@@ -6,8 +6,9 @@ import (
 
 const (
 	// TODO
-	DbFile       = "simplechain.db"
-	BlocksBucket = "blocks"
+	DbFile              = "simplechain.db"
+	BlocksBucket        = "blocks"
+	GenesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
 )
 
 type BlockChain struct {
@@ -114,7 +115,7 @@ func (bc *BlockChain) AddBlock(data string) {
 	}
 }
 
-func NewBlockChain() *BlockChain {
+func NewBlockChain(address string) *BlockChain {
 	var tip []byte
 
 	db, err := bolt.Open(DbFile, 0600, nil)
@@ -127,7 +128,9 @@ func NewBlockChain() *BlockChain {
 
 		if b == nil {
 			// 创建创世区块
-			genesis := NewGenesisBlock()
+			cbtx := NewCoinbaseTx(address, GenesisCoinbaseData)
+			genesis := NewGenesisBlock(cbtx)
+
 			b, err := tx.CreateBucket([]byte(BlocksBucket))
 			if err != nil {
 				panic(err)

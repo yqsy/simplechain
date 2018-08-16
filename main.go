@@ -1,7 +1,7 @@
 package main
 
 func main() {
-	bc := NewBlockChain()
+	bc := NewBlockChain("")
 	defer bc.db.Close()
 
 	cli := Cli{bc}

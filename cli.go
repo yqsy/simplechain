@@ -32,8 +32,12 @@ func (cli *Cli) Run() {
 
 	addBlockCmd := flag.NewFlagSet("addblock", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
+	createBlockChainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
 
 	addBlockData := addBlockCmd.String("data", "", "Block data")
+	createBlockChainAddr := createBlockChainCmd.String("address", "value", "Genesis Block Chain coin address")
+
+	_ = createBlockChainAddr
 
 	switch os.Args[1] {
 	case "addblock":
@@ -42,6 +46,10 @@ func (cli *Cli) Run() {
 		}
 	case "printchain":
 		if err := printChainCmd.Parse(os.Args[2:]); err != nil {
+			panic(err)
+		}
+	case "createblockchain":
+		if err := createBlockChainCmd.Parse(os.Args[2:]); err != nil {
 			panic(err)
 		}
 	default:
@@ -56,6 +64,8 @@ func (cli *Cli) Run() {
 		cli.addBlock(*addBlockData)
 	} else if printChainCmd.Parsed() {
 		cli.printChain()
+	} else if createBlockChainCmd.Parsed() {
+		cli.createBlockChain()
 	}
 
 }
@@ -78,4 +88,8 @@ func (cli *Cli) printChain() {
 		pow := NewProofOfWork(block)
 		fmt.Printf("PoW: %s\n\n", strconv.FormatBool(pow.Validate()))
 	}
+}
+
+func (cli *Cli) createBlockChain() {
+	// TODO
 }
