@@ -23,18 +23,18 @@ type Block struct {
 	Nonce int
 }
 
-func (b *Block) Serialize() []byte {
+func (b *Block) Serialize() ([]byte, error) {
 	var result bytes.Buffer
 	encoder := gob.NewEncoder(&result)
-	encoder.Encode(b)
-	return result.Bytes()
+	err := encoder.Encode(b)
+	return result.Bytes(), err
 }
 
-func DeserializeBlock(d []byte) *Block {
+func DeserializeBlock(d []byte) (*Block, error) {
 	var block Block
 	decoder := gob.NewDecoder(bytes.NewReader(d))
-	decoder.Decode(&block)
-	return &block
+	err := decoder.Decode(&block)
+	return &block, err
 }
 
 func NewBlock(data string, prevBlockHash []byte) *Block {

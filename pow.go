@@ -8,8 +8,8 @@ import (
 	"crypto/sha256"
 )
 
-var (
-	maxNonce = math.MaxInt64
+const (
+	MaxNonce = math.MaxInt64
 )
 
 // 值越大 -> target 越小 -> 难度越大
@@ -53,7 +53,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 	fmt.Printf("Mining the block containing \"%s\"\n", pow.block.Data)
 
-	for nonce < maxNonce {
+	for nonce < MaxNonce {
 		data := pow.prepareData(nonce)
 		hash = sha256.Sum256(data)
 		fmt.Printf("\r%x", hash)
