@@ -17,6 +17,48 @@ type BlockChain struct {
 	db *bolt.DB
 }
 
+type BlockChainIterator struct {
+	currentHash []byte
+	db          *bolt.DB
+}
+
+// 获取当前的block,并向前迭代
+func (bci *BlockChainIterator) Next() *Block {
+	var block *Block
+
+	err := bci.db.View(func(tx *bolt.Tx) error {
+		// 取出currentHash的结构体
+		b := tx.Bucket([]byte(BlocksBucket))
+
+		if b == nil {
+			panic("tx.Bucket return nil")
+		}
+
+		encodedBlock := b.Get(bci.currentHash)
+		blockTemp, err := DeserializeBlock(encodedBlock)
+		if err != nil {
+			panic(err)
+		}
+		block = blockTemp
+		return nil
+	})
+
+	if err != nil {
+		panic(err)
+	}
+	// hash向前迭代
+	bci.currentHash = block.PrevBlockHash
+	return block
+}
+
+func (bc *BlockChain) Iterator() *BlockChainIterator {
+	bci := &BlockChainIterator{
+		currentHash: bc.tip,
+		db:          bc.db,
+	}
+	return bci
+}
+
 func (bc *BlockChain) AddBlock(data string) {
 	var lastHash []byte
 
