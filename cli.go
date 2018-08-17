@@ -93,3 +93,18 @@ func (cli *Cli) printChain() {
 func (cli *Cli) createBlockChain() {
 	// TODO
 }
+
+func (cli *Cli) getBalance(address string) {
+	bc := NewBlockChain(address)
+	defer bc.db.Close()
+
+	balance := 0
+
+	UTXOs := bc.FindUTXO(address)
+
+	for _, out := range UTXOs {
+		balance += out.Value
+	}
+
+	fmt.Printf("Balance of '%s': %d\n", address, balance)
+}

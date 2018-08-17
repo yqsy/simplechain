@@ -14,6 +14,8 @@
 增加区块(着重PoW过程)  
 ![](./pig/blockchain_sequnce.png)
 
-UTXO  
+UTXO(未消费的交易输出)  
 ![](./pig/transactions-diagram.png)
 
+UTXO (deep)  
+![](./pig/utxo.png)
