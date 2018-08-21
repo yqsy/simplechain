@@ -27,7 +27,3 @@ UTXO(未消费的交易输出)
 UTXO (deep)  
 ![](./pig/utxo.png)
 
-生成地址
-![](./pig/address-generation-scheme.png)
-
-
