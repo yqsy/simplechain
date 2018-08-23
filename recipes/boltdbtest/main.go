@@ -29,12 +29,12 @@ func main() {
 	update_(db)
 	select_(db)
 
-	// 改
-	modify_(db)
-	select_(db)
-
 	// 删
 	delete_(db)
+	select_(db)
+
+	// 改
+	modify_(db)
 	select_(db)
 
 	// 遍历所有键
