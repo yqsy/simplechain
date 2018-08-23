@@ -5,22 +5,21 @@ import (
 	"crypto/sha256"
 	"crypto/rand"
 	"math/big"
-	"fmt"
 	"bytes"
 	"encoding/gob"
 )
 
 type Transaction struct {
-	id     []byte
-	txIns  []TxIn
-	txOuts []TxOut
+	Id     []byte
+	TxIns  []TxIn
+	TxOuts []TxOut
 }
 
 // 不包含in的 1. signature 2. prevPublicKeyHash
 // 以及不包含id
 func (tx *Transaction) hash() []byte {
 	txTrimCopy := tx.trimCopy()
-	txTrimCopy.id = nil
+	txTrimCopy.Id = nil
 	return txTrimCopy.serialize()
 }
 
@@ -35,35 +34,35 @@ func (tx *Transaction) serialize() []byte {
 
 // 去除in的 1. signature 2. prevPublicKeyHash
 func (tx *Transaction) trimCopy() *Transaction {
-	txInsCopy := make([]TxIn, len(tx.txIns))
-	TxOutsCopy := make([]TxOut, len(tx.txOuts))
-	copy(txInsCopy, tx.txIns)
-	copy(TxOutsCopy, tx.txOuts)
+	txInsCopy := make([]TxIn, len(tx.TxIns))
+	TxOutsCopy := make([]TxOut, len(tx.TxOuts))
+	copy(txInsCopy, tx.TxIns)
+	copy(TxOutsCopy, tx.TxOuts)
 
 	for idx := range txInsCopy {
-		txInsCopy[idx].signature = nil
-		txInsCopy[idx].prevPublicKeyHash = nil
+		txInsCopy[idx].Signature = nil
+		txInsCopy[idx].PrevPublicKeyHash = nil
 	}
 
-	idCopy := make([]byte, len(tx.id))
-	copy(idCopy, tx.id)
+	idCopy := make([]byte, len(tx.Id))
+	copy(idCopy, tx.Id)
 
 	return &Transaction{idCopy, txInsCopy, TxOutsCopy}
 }
 
 func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecdsa.PrivateKey) {
 	curTxTrimCopy := tx.trimCopy()
-	for idx, in := range curTxTrimCopy.txIns {
+	for idx, in := range curTxTrimCopy.TxIns {
 		// 从来源处获得公钥哈希值
-		prevPublicKeyHash := preTxMap[string(in.prevTxHashId)].txOuts[in.prevOutIdx].publicKeyHash
+		prevPublicKeyHash := preTxMap[string(in.PrevTxHashId)].TxOuts[in.PrevOutIdx].PublicKeyHash
 
 		// 填充来区分交易
-		curTxTrimCopy.txIns[idx].prevPublicKeyHash = prevPublicKeyHash
+		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = prevPublicKeyHash
 
 		// 私钥签名(hash(证书)) -> 签名
 
 		// 证书
-		certificate := fmt.Sprintf("%x\n", curTxTrimCopy)
+		certificate := curTxTrimCopy.serialize()
 
 		// hash
 		sha256Sum := sha256.Sum256([]byte(certificate))
@@ -73,27 +72,27 @@ func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecd
 		signature := append(r.Bytes(), s.Bytes()...)
 
 		// 填充 // 输出
-		tx.txIns[idx].signature = signature
+		tx.TxIns[idx].Signature = signature
 
 		// 回退copy的prevPublicKeyHash
-		curTxTrimCopy.txIns[idx].prevPublicKeyHash = nil
+		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = nil
 	}
 }
 
 func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ecdsa.PublicKey) bool {
 	curTxTrimCopy := tx.trimCopy()
 
-	for idx, in := range curTxTrimCopy.txIns {
+	for idx, in := range curTxTrimCopy.TxIns {
 		// 从来源处获得公钥哈希值
-		prevPublicKeyHash := preTxMap[string(in.prevTxHashId)].txOuts[in.prevOutIdx].publicKeyHash
+		prevPublicKeyHash := preTxMap[string(in.PrevTxHashId)].TxOuts[in.PrevOutIdx].PublicKeyHash
 
 		// 填充来区分交易
-		curTxTrimCopy.txIns[idx].prevPublicKeyHash = prevPublicKeyHash
+		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = prevPublicKeyHash
 
 		// 公钥解密(签名) == hash(证书)
 
 		// 证书
-		certificate := fmt.Sprintf("%x\n", curTxTrimCopy)
+		certificate := curTxTrimCopy.serialize()
 
 		// hash
 		sha256Sum := sha256.Sum256([]byte(certificate))
@@ -101,9 +100,9 @@ func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ec
 		// 签名
 		r := big.Int{}
 		s := big.Int{}
-		sigLen := len(tx.txIns[idx].signature)
-		r.SetBytes(tx.txIns[idx].signature[:(sigLen / 2)])
-		s.SetBytes(tx.txIns[idx].signature[(sigLen / 2):])
+		sigLen := len(tx.TxIns[idx].Signature)
+		r.SetBytes(tx.TxIns[idx].Signature[:(sigLen / 2)])
+		s.SetBytes(tx.TxIns[idx].Signature[(sigLen / 2):])
 
 		// 公钥验证
 		if !ecdsa.Verify(publicKey, sha256Sum[:], &r, &s) {
@@ -111,7 +110,7 @@ func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ec
 		}
 
 		// 回退copy的prevPublicKeyHash
-		curTxTrimCopy.txIns[idx].prevPublicKeyHash = nil
+		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = nil
 	}
 
 	return true
@@ -119,30 +118,30 @@ func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ec
 
 func NewTransaction(txIns []TxIn, txOuts []TxOut) *Transaction {
 	tx := &Transaction{}
-	tx.id = getRandomBit(160)
-	tx.txIns = txIns
-	tx.txOuts = txOuts
+	tx.TxIns = txIns
+	tx.TxOuts = txOuts
+	tx.Id = tx.hash()
 	return tx
 }
 
 type TxIn struct {
 	// 前一笔交易的: hash值
-	prevTxHashId []byte
+	PrevTxHashId []byte
 
 	// 前一笔交易的: 输出index
-	prevOutIdx int
+	PrevOutIdx int
 
 	// 本次交易的: 签名
-	signature []byte
+	Signature []byte
 
 	// 前一笔交易的: 输出到的公钥哈希
-	prevPublicKeyHash []byte
+	PrevPublicKeyHash []byte
 }
 
 type TxOut struct {
 	// 本次交易的: 转账金额
-	amount int
+	Amount int
 
 	// 本次交易的: 输出到的公钥哈希
-	publicKeyHash []byte
+	PublicKeyHash []byte
 }

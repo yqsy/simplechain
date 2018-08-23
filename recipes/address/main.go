@@ -120,9 +120,9 @@ func main() {
 	walletB := NewWallet()
 
 	// 构建当前交易的3个in和2个out
-	txInA1 := TxIn{txPreOutA1Tx.id, 0, nil, nil}
-	txInA2 := TxIn{txPreOutA2Tx.id, 0, nil, nil}
-	txInA3 := TxIn{txPreOutA3Tx.id, 0, nil, nil}
+	txInA1 := TxIn{txPreOutA1Tx.Id, 0, nil, nil}
+	txInA2 := TxIn{txPreOutA2Tx.Id, 0, nil, nil}
+	txInA3 := TxIn{txPreOutA3Tx.Id, 0, nil, nil}
 	txOutB1 := TxOut{55, walletB.publicKeyHash}
 	txOutA1 := TxOut{5, walletA.publicKeyHash}
 
@@ -131,9 +131,9 @@ func main() {
 
 	// [txId]交易引用
 	preTxMap := make(map[string]*Transaction)
-	preTxMap[string(txPreOutA1Tx.id)] = txPreOutA1Tx
-	preTxMap[string(txPreOutA2Tx.id)] = txPreOutA2Tx
-	preTxMap[string(txPreOutA3Tx.id)] = txPreOutA3Tx
+	preTxMap[string(txPreOutA1Tx.Id)] = txPreOutA1Tx
+	preTxMap[string(txPreOutA2Tx.Id)] = txPreOutA2Tx
+	preTxMap[string(txPreOutA3Tx.Id)] = txPreOutA3Tx
 
 	// 签名
 	curTx.signTxs(preTxMap, walletA.privateKey)
