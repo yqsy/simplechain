@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/rand"
-	"math/big"
 	"bytes"
 	"encoding/gob"
 )
@@ -15,14 +14,18 @@ type Transaction struct {
 	TxOuts []TxOut
 }
 
-// 不包含in的 1. signature 2. prevPublicKeyHash
-// 生成交易时使用
+// 生成交易Id时使用
 func (tx *Transaction) hash() []byte {
+	// 去除 1. signature 2. PublicKey
 	txTrimCopy := tx.trimCopy()
+
+	// 去除 3. Id
 	txTrimCopy.Id = nil
 	return txTrimCopy.serialize()
 }
 
+// a. 生成交易Id时使用: 不包括1. signature 2. PublicKey 3. Id
+// b. 生成交易证书时使用: 不包括 signature 包括 publicKey(此时publicKey是prePublicKeyHash)
 func (tx *Transaction) serialize() []byte {
 	var encode bytes.Buffer
 	enc := gob.NewEncoder(&encode)
@@ -32,7 +35,7 @@ func (tx *Transaction) serialize() []byte {
 	return encode.Bytes()
 }
 
-// 去除in的 1. signature 2. prevPublicKeyHash
+// 去除in的 1. signature 2. PublicKey
 func (tx *Transaction) trimCopy() *Transaction {
 	txInsCopy := make([]TxIn, len(tx.TxIns))
 	TxOutsCopy := make([]TxOut, len(tx.TxOuts))
@@ -41,7 +44,7 @@ func (tx *Transaction) trimCopy() *Transaction {
 
 	for idx := range txInsCopy {
 		txInsCopy[idx].Signature = nil
-		txInsCopy[idx].PrevPublicKeyHash = nil
+		txInsCopy[idx].PublicKey = nil
 	}
 
 	idCopy := make([]byte, len(tx.Id))
@@ -53,11 +56,9 @@ func (tx *Transaction) trimCopy() *Transaction {
 func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecdsa.PrivateKey) {
 	curTxTrimCopy := tx.trimCopy()
 	for idx, in := range curTxTrimCopy.TxIns {
-		// 从来源处获得公钥哈希值
+		// PublicKey填为上一笔输出的prevPublicKeyHash,用来做特殊签名
 		prevPublicKeyHash := preTxMap[string(in.PrevTxHashId)].TxOuts[in.PrevOutIdx].PublicKeyHash
-
-		// 填充来区分交易
-		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = prevPublicKeyHash
+		curTxTrimCopy.TxIns[idx].PublicKey = prevPublicKeyHash
 
 		// 私钥签名(hash(证书)) -> 签名
 
@@ -74,20 +75,17 @@ func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecd
 		// 填充 // 输出
 		tx.TxIns[idx].Signature = signature
 
-		// 回退copy的prevPublicKeyHash
-		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = nil
+		// 回退为nil,不影响其他in的签名认证
+		curTxTrimCopy.TxIns[idx].PublicKey = nil
 	}
 }
 
-func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ecdsa.PublicKey) bool {
+func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction) bool {
 	curTxTrimCopy := tx.trimCopy()
-
 	for idx, in := range curTxTrimCopy.TxIns {
-		// 从来源处获得公钥哈希值
+		// PublicKey填为上一笔输出的prevPublicKeyHash,用来做特殊签名
 		prevPublicKeyHash := preTxMap[string(in.PrevTxHashId)].TxOuts[in.PrevOutIdx].PublicKeyHash
-
-		// 填充来区分交易
-		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = prevPublicKeyHash
+		curTxTrimCopy.TxIns[idx].PublicKey = prevPublicKeyHash
 
 		// 公钥解密(签名) == hash(证书)
 
@@ -98,19 +96,18 @@ func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ec
 		sha256Sum := sha256.Sum256([]byte(certificate))
 
 		// 签名
-		r := big.Int{}
-		s := big.Int{}
-		sigLen := len(tx.TxIns[idx].Signature)
-		r.SetBytes(tx.TxIns[idx].Signature[:(sigLen / 2)])
-		s.SetBytes(tx.TxIns[idx].Signature[(sigLen / 2):])
+		r, s := convertSignatureTors(tx.TxIns[idx].Signature)
+
+		// 公钥
+		publicKey := convertBytesToPublicKey(tx.TxIns[idx].PublicKey)
 
 		// 公钥验证
-		if !ecdsa.Verify(publicKey, sha256Sum[:], &r, &s) {
+		if !ecdsa.Verify(publicKey, sha256Sum[:], r, s) {
 			return false
 		}
 
-		// 回退copy的prevPublicKeyHash
-		curTxTrimCopy.TxIns[idx].PrevPublicKeyHash = nil
+		// 回退为nil,不影响其他in的签名认证
+		curTxTrimCopy.TxIns[idx].PublicKey = nil
 	}
 
 	return true
@@ -134,8 +131,8 @@ type TxIn struct {
 	// 本次交易的: 签名
 	Signature []byte
 
-	// 前一笔交易的: 输出到的公钥哈希
-	PrevPublicKeyHash []byte
+	// 1. 本次交易的: 公钥 2: 前一笔交易的: 输出到的公钥哈希(sign,verify时用)
+	PublicKey []byte
 }
 
 type TxOut struct {

@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/ripemd160"
 	"github.com/yqsy/simplechain/base58"
 	"fmt"
+	"math/big"
 )
 
 const (
@@ -73,6 +74,33 @@ func getPublicKeyFromWalletAddress(walletAddress []byte) []byte {
 	return walletAddress[VersionLen : len(walletAddressDecoded)-CheckSumLen]
 }
 
+// ecdsa.PublicKey -> publicKeyBytes
+func convertPublicKeyToBytes(publicKey *ecdsa.PublicKey) []byte {
+	publicKeyBytes := append(publicKey.X.Bytes(), publicKey.Y.Bytes()...)
+	return publicKeyBytes
+}
+
+// publicKeyBytes -> ecdsa.PublicKey
+func convertBytesToPublicKey(publicKeyBytes []byte) *ecdsa.PublicKey {
+	x := big.Int{}
+	y := big.Int{}
+	keyLen := len(publicKeyBytes)
+	x.SetBytes(publicKeyBytes[:(keyLen / 2)])
+	y.SetBytes(publicKeyBytes[(keyLen / 2):])
+	curve := elliptic.P256()
+	return &ecdsa.PublicKey{Curve: curve, X: &x, Y: &y}
+}
+
+// signature -> r,s
+func convertSignatureTors(signature []byte) (*big.Int, *big.Int) {
+	r := &big.Int{}
+	s := &big.Int{}
+	sigLen := len(signature)
+	r.SetBytes(signature[:(sigLen / 2)])
+	s.SetBytes(signature[(sigLen / 2):])
+	return r, s
+}
+
 // 这里为了把所有的成员放置在一起
 // 实际上wallet只需要 1. privateKey 2. publicKey
 type Wallet struct {
@@ -106,40 +134,4 @@ func (wallet *Wallet) String() string {
 	result += fmt.Sprintf("publicKeyHashCheckSumCut: %x\n", wallet.publicKeyHashCheckSumCut)
 	result += fmt.Sprintf("walletAddress: %s\n", wallet.walletAddress)
 	return result
-}
-
-func main() {
-	// 假装3笔输出 作为资金来源
-	walletA := NewWallet()
-	txPreOutA1Tx := NewTransaction(nil, []TxOut{TxOut{10, walletA.publicKeyHash}})
-	txPreOutA2Tx := NewTransaction(nil, []TxOut{TxOut{20, walletA.publicKeyHash}})
-	txPreOutA3Tx := NewTransaction(nil, []TxOut{TxOut{30, walletA.publicKeyHash}})
-
-	// 55个币输出到钱包B, 5个币回退输出到钱包A
-
-	walletB := NewWallet()
-
-	// 构建当前交易的3个in和2个out
-	txInA1 := TxIn{txPreOutA1Tx.Id, 0, nil, nil}
-	txInA2 := TxIn{txPreOutA2Tx.Id, 0, nil, nil}
-	txInA3 := TxIn{txPreOutA3Tx.Id, 0, nil, nil}
-	txOutB1 := TxOut{55, walletB.publicKeyHash}
-	txOutA1 := TxOut{5, walletA.publicKeyHash}
-
-	// 当前的交易
-	curTx := NewTransaction([]TxIn{txInA1, txInA2, txInA3}, []TxOut{txOutB1, txOutA1})
-
-	// [txId]交易引用
-	preTxMap := make(map[string]*Transaction)
-	preTxMap[string(txPreOutA1Tx.Id)] = txPreOutA1Tx
-	preTxMap[string(txPreOutA2Tx.Id)] = txPreOutA2Tx
-	preTxMap[string(txPreOutA3Tx.Id)] = txPreOutA3Tx
-
-	// 签名
-	curTx.signTxs(preTxMap, walletA.privateKey)
-
-	// 验证
-	if !curTx.verifyTxs(preTxMap, walletA.publicKey) {
-		panic("verify error")
-	}
 }
