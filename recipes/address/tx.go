@@ -6,6 +6,8 @@ import (
 	"crypto/rand"
 	"math/big"
 	"fmt"
+	"bytes"
+	"encoding/gob"
 )
 
 type Transaction struct {
@@ -14,8 +16,25 @@ type Transaction struct {
 	txOuts []TxOut
 }
 
+// 不包含in的 1. signature 2. prevPublicKeyHash
+// 以及不包含id
+func (tx *Transaction) hash() []byte {
+	txTrimCopy := tx.trimCopy()
+	txTrimCopy.id = nil
+	return txTrimCopy.serialize()
+}
+
+func (tx *Transaction) serialize() []byte {
+	var encode bytes.Buffer
+	enc := gob.NewEncoder(&encode)
+	if err := enc.Encode(tx); err != nil {
+		panic(err)
+	}
+	return encode.Bytes()
+}
+
 // 去除in的 1. signature 2. prevPublicKeyHash
-func (tx *Transaction) TrimCopy() *Transaction {
+func (tx *Transaction) trimCopy() *Transaction {
 	txInsCopy := make([]TxIn, len(tx.txIns))
 	TxOutsCopy := make([]TxOut, len(tx.txOuts))
 	copy(txInsCopy, tx.txIns)
@@ -33,7 +52,7 @@ func (tx *Transaction) TrimCopy() *Transaction {
 }
 
 func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecdsa.PrivateKey) {
-	curTxTrimCopy := tx.TrimCopy()
+	curTxTrimCopy := tx.trimCopy()
 	for idx, in := range curTxTrimCopy.txIns {
 		// 从来源处获得公钥哈希值
 		prevPublicKeyHash := preTxMap[string(in.prevTxHashId)].txOuts[in.prevOutIdx].publicKeyHash
@@ -62,7 +81,7 @@ func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecd
 }
 
 func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ecdsa.PublicKey) bool {
-	curTxTrimCopy := tx.TrimCopy()
+	curTxTrimCopy := tx.trimCopy()
 
 	for idx, in := range curTxTrimCopy.txIns {
 		// 从来源处获得公钥哈希值
