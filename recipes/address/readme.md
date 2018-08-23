@@ -1,12 +1,18 @@
 <!-- TOC -->
 
-- [1. 图片](#1-图片)
-- [2. 实现列表](#2-实现列表)
+- [1. 相关知识](#1-相关知识)
+- [2. 图片](#2-图片)
+- [3. 实现列表](#3-实现列表)
 
 <!-- /TOC -->
 
-<a id="markdown-1-图片" name="1-图片"></a>
-# 1. 图片
+<a id="markdown-1-相关知识" name="1-相关知识"></a>
+# 1. 相关知识
+
+* http://www.youdzone.com/signature.html (签名+认证)
+
+<a id="markdown-2-图片" name="2-图片"></a>
+# 2. 图片
 
 流程图1  
 ![](../../pig/address-generation-scheme.png)
@@ -23,8 +29,11 @@
 签名验证  
 ![](../../pig/sign_verify.png)
 
-<a id="markdown-2-实现列表" name="2-实现列表"></a>
-# 2. 实现列表
+一笔转账  
+![](../../pig/transfer_confirm.png)
+
+<a id="markdown-3-实现列表" name="3-实现列表"></a>
+# 3. 实现列表
 * RANDOM 生成私钥
 * SECP256K1 生成对应的公钥
 * SHA256 + RIPEMD160 生成公钥哈希
@@ -33,3 +42,4 @@
 * 钱包地址提取公钥哈希
 * 签名一笔交易
 * 验证一笔交易
+ 

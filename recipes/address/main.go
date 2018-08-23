@@ -8,8 +8,6 @@ import (
 	"golang.org/x/crypto/ripemd160"
 	"github.com/yqsy/simplechain/base58"
 	"fmt"
-	"crypto/x509"
-	"encoding/pem"
 )
 
 const (
@@ -75,42 +73,72 @@ func getPublicKeyFromWalletAddress(walletAddress []byte) []byte {
 	return walletAddress[VersionLen : len(walletAddressDecoded)-CheckSumLen]
 }
 
-func encode(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey) (string, string) {
-	x509Encoded, _ := x509.MarshalECPrivateKey(privateKey)
-	pemEncoded := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
-
-	x509EncodedPub, _ := x509.MarshalPKIXPublicKey(publicKey)
-	pemEncodedPub := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: x509EncodedPub})
-
-	return string(pemEncoded), string(pemEncodedPub)
+// 这里为了把所有的成员放置在一起
+// 实际上wallet只需要 1. privateKey 2. publicKey
+type Wallet struct {
+	privateKey               *ecdsa.PrivateKey // 私钥
+	publicKey                *ecdsa.PublicKey  // 公钥
+	privateKeyEncoded        string            // 私钥x509 encode
+	publicKeyEncoded         string            // 公钥x509 encode
+	publicKeyHash            []byte            // 公钥hash
+	publicKeyHashCheckSum    []byte            // [版本+公钥哈希]校验值
+	publicKeyHashCheckSumCut []byte            // [版本+公钥哈希]校验值前4字节
+	walletAddress            []byte            // 钱包地址
 }
 
-func decode(pemEncoded string, pemEncodedPub string) (*ecdsa.PrivateKey, *ecdsa.PublicKey) {
-	block, _ := pem.Decode([]byte(pemEncoded))
-	x509Encoded := block.Bytes
-	privateKey, _ := x509.ParseECPrivateKey(x509Encoded)
+func NewWallet() *Wallet {
+	wallet := &Wallet{}
+	wallet.privateKey, wallet.publicKey = generateKeyPair()
+	wallet.privateKeyEncoded, wallet.publicKeyEncoded = encode(wallet.privateKey, wallet.publicKey)
+	wallet.publicKeyHash = generatePublicKeyHash(wallet.publicKey)
+	wallet.publicKeyHashCheckSum = generatePublicKeyHashCheckSum(Version, wallet.publicKeyHash)
+	wallet.publicKeyHashCheckSumCut = wallet.publicKeyHashCheckSum[:CheckSumLen]
+	wallet.walletAddress = generateWalletAddress(Version, wallet.publicKeyHash, wallet.publicKeyHashCheckSumCut)
+	return wallet
+}
 
-	blockPub, _ := pem.Decode([]byte(pemEncodedPub))
-	x509EncodedPub := blockPub.Bytes
-	genericPublicKey, _ := x509.ParsePKIXPublicKey(x509EncodedPub)
-	publicKey := genericPublicKey.(*ecdsa.PublicKey)
-
-	return privateKey, publicKey
+func (wallet *Wallet) String() string {
+	result := ""
+	result += fmt.Sprintf("%v\n\n", wallet.privateKeyEncoded)
+	result += fmt.Sprintf("%v\n\n", wallet.publicKeyEncoded)
+	result += fmt.Sprintf("version: %v\n", Version)
+	result += fmt.Sprintf("publickeyHash: %x\n", wallet.publicKeyHash)
+	result += fmt.Sprintf("publicKeyHashCheckSumCut: %x\n", wallet.publicKeyHashCheckSumCut)
+	result += fmt.Sprintf("walletAddress: %s\n", wallet.walletAddress)
+	return result
 }
 
 func main() {
-	privateKey, publicKey := generateKeyPair()
-	privateKeyEncoded, publicKeyEncoded := encode(privateKey, publicKey)
-	fmt.Printf("%v \n\n%v\n\n", privateKeyEncoded, publicKeyEncoded)
+	// 假装3笔输出 作为资金来源
+	walletA := NewWallet()
+	txPreOutA1Tx := NewTransaction(nil, []TxOut{TxOut{10, walletA.publicKeyHash}})
+	txPreOutA2Tx := NewTransaction(nil, []TxOut{TxOut{20, walletA.publicKeyHash}})
+	txPreOutA3Tx := NewTransaction(nil, []TxOut{TxOut{30, walletA.publicKeyHash}})
 
-	fmt.Printf("version: %v\n", Version)
+	// 55个币输出到钱包B, 5个币回退输出到钱包A
 
-	publicKeyHash := generatePublicKeyHash(publicKey)
-	fmt.Printf("publickeyHash: %x\n", publicKeyHash)
+	walletB := NewWallet()
 
-	publicKeyHashCheckSum := generatePublicKeyHashCheckSum(Version, publicKeyHash)
-	publicKeyHashCheckSumCut := publicKeyHashCheckSum[:CheckSumLen]
-	fmt.Printf("publicKeyHashCheckSumCut: %x\n", publicKeyHashCheckSumCut)
-	walletAddress := generateWalletAddress(Version, publicKeyHash, publicKeyHashCheckSumCut)
-	fmt.Printf("walletAddress: %x\n", walletAddress)
+	// 构建当前交易的3个in和2个out
+	txInA1 := TxIn{txPreOutA1Tx.id, 0, nil, nil}
+	txInA2 := TxIn{txPreOutA2Tx.id, 0, nil, nil}
+	txInA3 := TxIn{txPreOutA3Tx.id, 0, nil, nil}
+	txOutB1 := TxOut{55, walletB.publicKeyHash}
+	txOutA1 := TxOut{5, walletA.publicKeyHash}
+
+	// 当前的交易
+	curTx := NewTransaction([]TxIn{txInA1, txInA2, txInA3}, []TxOut{txOutB1, txOutA1})
+
+	// [txId]交易引用
+	preTxMap := make(map[string]*Transaction)
+	preTxMap[string(txPreOutA1Tx.id)] = txPreOutA1Tx
+	preTxMap[string(txPreOutA2Tx.id)] = txPreOutA2Tx
+	preTxMap[string(txPreOutA3Tx.id)] = txPreOutA3Tx
+
+	// 签名
+	curTx.signTxs(preTxMap, walletA.privateKey)
+
+	// 验证
+	curTx.verifyTxs(preTxMap, walletA.publicKey)
+
 }
