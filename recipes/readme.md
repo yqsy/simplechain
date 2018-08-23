@@ -12,4 +12,4 @@ recipes项目对simple chain实现所用到的技术/依赖做一个简单的实
 
 * [address(私钥/公钥/钱包地址/签名交易)](address)
 * [boltdbtest(k/v数据库/事务)](boltdbtest)
-
+* [utxo(寻找未花费的输出/新增加输出)](utxo)
