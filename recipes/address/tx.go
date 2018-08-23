@@ -16,7 +16,7 @@ type Transaction struct {
 }
 
 // 不包含in的 1. signature 2. prevPublicKeyHash
-// 以及不包含id
+// 生成交易时使用
 func (tx *Transaction) hash() []byte {
 	txTrimCopy := tx.trimCopy()
 	txTrimCopy.Id = nil
