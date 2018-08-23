@@ -2,11 +2,10 @@ package main
 
 import (
 	"crypto/ecdsa"
-	"bytes"
-	"encoding/gob"
 	"crypto/sha256"
 	"crypto/rand"
 	"math/big"
+	"fmt"
 )
 
 type Transaction struct {
@@ -23,8 +22,8 @@ func (tx *Transaction) TrimCopy() *Transaction {
 	copy(TxOutsCopy, tx.txOuts)
 
 	for idx := range txInsCopy {
-		txInsCopy[idx].signature = []byte{}
-		txInsCopy[idx].prevPublicKeyHash = []byte{}
+		txInsCopy[idx].signature = nil
+		txInsCopy[idx].prevPublicKeyHash = nil
 	}
 
 	idCopy := make([]byte, len(tx.id))
@@ -45,12 +44,10 @@ func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecd
 		// 私钥签名(hash(证书)) -> 签名
 
 		// 证书
-		var txEncoded bytes.Buffer
-		enc := gob.NewEncoder(&txEncoded)
-		enc.Encode(curTxTrimCopy)
+		certificate := fmt.Sprintf("%x\n", curTxTrimCopy)
 
 		// hash
-		sha256Sum := sha256.Sum256(txEncoded.Bytes())
+		sha256Sum := sha256.Sum256([]byte(certificate))
 
 		// 私钥签名
 		r, s, _ := ecdsa.Sign(rand.Reader, privateKey, sha256Sum[:])
@@ -60,7 +57,7 @@ func (tx *Transaction) signTxs(preTxMap map[string]*Transaction, privateKey *ecd
 		tx.txIns[idx].signature = signature
 
 		// 回退copy的prevPublicKeyHash
-		curTxTrimCopy.txIns[idx].prevPublicKeyHash = []byte{}
+		curTxTrimCopy.txIns[idx].prevPublicKeyHash = nil
 	}
 }
 
@@ -77,19 +74,17 @@ func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ec
 		// 公钥解密(签名) == hash(证书)
 
 		// 证书
-		var txEncoded bytes.Buffer
-		enc := gob.NewEncoder(&txEncoded)
-		enc.Encode(curTxTrimCopy)
+		certificate := fmt.Sprintf("%x\n", curTxTrimCopy)
 
 		// hash
-		sha256Sum := sha256.Sum256(txEncoded.Bytes())
+		sha256Sum := sha256.Sum256([]byte(certificate))
 
 		// 签名
 		r := big.Int{}
 		s := big.Int{}
-		sigLen := len(in.signature)
-		r.SetBytes(in.signature[:(sigLen / 2)])
-		s.SetBytes(in.signature[(sigLen / 2):])
+		sigLen := len(tx.txIns[idx].signature)
+		r.SetBytes(tx.txIns[idx].signature[:(sigLen / 2)])
+		s.SetBytes(tx.txIns[idx].signature[(sigLen / 2):])
 
 		// 公钥验证
 		if !ecdsa.Verify(publicKey, sha256Sum[:], &r, &s) {
@@ -97,7 +92,7 @@ func (tx *Transaction) verifyTxs(preTxMap map[string]*Transaction, publicKey *ec
 		}
 
 		// 回退copy的prevPublicKeyHash
-		curTxTrimCopy.txIns[idx].prevPublicKeyHash = []byte{}
+		curTxTrimCopy.txIns[idx].prevPublicKeyHash = nil
 	}
 
 	return true

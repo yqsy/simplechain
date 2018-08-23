@@ -139,6 +139,7 @@ func main() {
 	curTx.signTxs(preTxMap, walletA.privateKey)
 
 	// 验证
-	curTx.verifyTxs(preTxMap, walletA.publicKey)
-
+	if !curTx.verifyTxs(preTxMap, walletA.publicKey) {
+		panic("verify error")
+	}
 }
