@@ -16,14 +16,14 @@ go get github.com/Jeiwan/blockchain_go
 ```
 
 区块链结构  
-![](./pig/blockchain_struct.png)
+![](./pic/blockchain_struct.png)
 
 增加区块(着重PoW过程)  
-![](./pig/blockchain_sequnce.png)
+![](./pic/blockchain_sequnce.png)
 
 UTXO(未消费的交易输出)  
-![](./pig/transactions-diagram.png)
+![](./pic/transactions-diagram.png)
 
 UTXO (deep)  
-![](./pig/utxo.png)
+![](./pic/utxo.png)
 
