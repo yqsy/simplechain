@@ -46,11 +46,11 @@ for i := 0; i < 10; i++ {
 
 两个角度的思考:
 * `WalletAddr-A` 至始至终只有干净的一笔记录 -> `fromWalletAddress` 的`fromOuts`只要被用到就会产生新的tx,并去除冗余`fromOuts`
-* `WalletAddr-A` 有多笔记录 -> `toWalletAddress`的`outPut`会不断的产生
+* `WalletAddr-A` 有多笔记录 -> `toWalletAddress`的`out`会不断的产生
 
 ---
 
-当需要把多笔`toWalletAddress`的`outPut`累计成一笔大的outPut时,`walletB` -> `walletC`, 如图:
+当需要把多笔`toWalletAddress`的`out`累计成一笔大的out时,`walletB` -> `walletC`, 如图:
 
 ![](./pic/utxo_transfer_package.png)
 
@@ -59,7 +59,7 @@ for i := 0; i < 10; i++ {
 <a id="markdown-2-实现列表" name="2-实现列表"></a>
 # 2. 实现列表
 
-* 存储结构map [txId]outs
+* 存储结构map [txId] -> 有效的outs
 * publicKeyHash -> 满足金额的可花费输出, `返回map`
 * publicKeyHash -> 所有的可花费输出, `返回list`
 * 所有交易数
