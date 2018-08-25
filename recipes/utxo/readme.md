@@ -14,7 +14,7 @@
 <a id="markdown-11-更新维度" name="11-更新维度"></a>
 ## 1.1. 更新维度
 
-utxo存储bucket,只保留`未花费输出`的数据,当产生交易时,要把`已花费输出`的数据删除.`让utxo存储bucket只保留有效的out数据.`
+utxo存储bucket,只保留`未花费输出`的数据,当产生交易时,要把`已花费输出`的数据删除.`让utxo存储bucket只保留有效的txOut数据.`
 
 ![](./pic/utxo_transfer_a.png) 
 
@@ -45,12 +45,12 @@ for i := 0; i < 10; i++ {
 ![](./pic/utxo_transfer_continuity.png)
 
 两个角度的思考:
-* `WalletAddr-A` 至始至终只有干净的一笔记录 -> `fromWalletAddress` 的`fromOuts`只要被用到就会产生新的tx,并去除冗余`fromOuts`
-* `WalletAddr-A` 有多笔记录 -> `toWalletAddress`的`out`会不断的产生
+* `WalletAddr-A` 至始至终只有干净的一笔记录 -> `fromWalletAddress` 的`fromTxOuts`只要被用到就会产生新的tx,并去除冗余`fromTxOuts`
+* `WalletAddr-B` 有多笔记录 -> `toWalletAddress`的`txOut`会不断的产生
 
 ---
 
-当需要把多笔`toWalletAddress`的`out`累计成一笔大的out时,`walletB` -> `walletC`, 如图:
+当需要把多笔`toWalletAddress`的`txOut`累计成一笔大的txOut时,`walletB` -> `walletC`, 如图:
 
 ![](./pic/utxo_transfer_package.png)
 
@@ -59,9 +59,9 @@ for i := 0; i < 10; i++ {
 <a id="markdown-2-实现列表" name="2-实现列表"></a>
 # 2. 实现列表
 
-* 存储结构map [txId] -> 有效的outs
-* publicKeyHash -> 满足金额的可花费输出, `返回map`
-* publicKeyHash -> 所有的可花费输出, `返回list`
-* 所有交易数
+* 存储结构map [txId] -> 有效的txOuts(serialized)
+* publicKeyHash -> 满足金额的可花费输出, `返回map` [txId]txOutIdx (用来建立新的tx的in所使用)
+* publicKeyHash -> 所有的可花费输出, `返回list` {txOut} (获取余额用)
+* 所有交易的数量
 * 根据blockchain重建utxo存储层  *
 * update (转账toWalletAddress时,`3种状态`更新fromWalletAddress)
