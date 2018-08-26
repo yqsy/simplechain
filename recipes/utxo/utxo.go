@@ -140,6 +140,26 @@ func (utxoDb *UtxoDb) findSpendableTxOutIdx(publicKeyHash []byte, transferAmount
 	return remainAmount, spendableOuts
 }
 
+// 获取新的txOuts的txInput (满足转账金额)
+func (utxoDb *UtxoDb) getSpendableInputs(publicKeyHash []byte, transferAmount int) *[]TxIn {
+	remainAmount, spendableOuts := utxoDb.findSpendableTxOutIdx(publicKeyHash, transferAmount)
+
+	if remainAmount < transferAmount {
+		return nil
+	}
+
+	result := make([]TxIn, 0)
+
+	for k, v := range spendableOuts {
+		txId := []byte(k)
+		txOutIdx := v
+
+		result = append(result, TxIn{txId, txOutIdx})
+	}
+
+	return &result
+}
+
 // 寻找所有的可花费输出, 返回 []TxOut
 func (utxoDb *UtxoDb) findAllTxOut(publicKeyHash []byte) []TxOut {
 	var txOutResult []TxOut

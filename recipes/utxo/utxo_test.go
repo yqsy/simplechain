@@ -243,6 +243,107 @@ func TestSimpleC(t *testing.T) {
 	}
 }
 
+// 连续转账
+func TestContinue(t *testing.T) {
+	os.Remove(DbFileName)
+
+	utxoDb := NewUtxoDb(DbFileName)
+	defer func() { os.Remove(DbFileName) }()
+
+	// 初始交易: 创建公钥哈希A
+	publicKeyHashA, txIdHash1 := createTxOnlyOut(utxoDb, 10, t)
+
+	publicKeyHashB := getRandomBit(20)
+
+	// 先转1笔
+	txIns := []TxIn{TxIn{txIdHash1, 0}}
+	txOuts := []TxOut{TxOut{1, publicKeyHashB}, TxOut{9, publicKeyHashA}}
+	txId := getRandomBit(32)
+
+	utxoDb.update(txIns, txOuts, txId)
+
+	// 1. A可花费输出为9 2. B可花费输出为1
+	remainAmount, spendableOuts := utxoDb.findSpendableTxOutIdx(publicKeyHashA, 9)
+	if remainAmount != 9 {
+		t.Fatal("err")
+	}
+	spendableOutsEqual := make(map[string]int)
+	spendableOutsEqual[string(txId)] = 1
+	if !reflect.DeepEqual(spendableOuts, spendableOutsEqual) {
+		t.Fatal("err")
+	}
+
+	remainAmount, spendableOuts = utxoDb.findSpendableTxOutIdx(publicKeyHashB, 1)
+	if remainAmount != 1 {
+		t.Fatal("err")
+	}
+	spendableOutsEqual = make(map[string]int)
+	spendableOutsEqual[string(txId)] = 0
+	if !reflect.DeepEqual(spendableOuts, spendableOutsEqual) {
+		t.Fatal("err")
+	}
+
+	// 1. A余额为9 2. B余额为1
+	if utxoDb.getBalance(publicKeyHashA) != 9 || utxoDb.getBalance(publicKeyHashB) != 1 {
+		t.Fatal("err")
+	}
+
+	// 交易数量为1
+	if utxoDb.countTransactions() != 1 {
+		t.Fatal("err")
+	}
+
+	// 之前的来源txID
+	prevTxId := txId
+
+	// 再转8笔
+	remain := 9
+	for i := 0; i < 8; i++ {
+		txIns = []TxIn{TxIn{prevTxId, 1}}
+		txOuts = []TxOut{TxOut{1, publicKeyHashB}, TxOut{remain - i, publicKeyHashA}}
+		txId = getRandomBit(32)
+		utxoDb.update(txIns, txOuts, txId)
+		prevTxId = txId
+	}
+
+	// 最后1笔
+	txIns = []TxIn{TxIn{prevTxId, 1}}
+	txOuts = []TxOut{TxOut{1, publicKeyHashB}}
+	txId = getRandomBit(32)
+	utxoDb.update(txIns, txOuts, txId)
+
+	// 1. A余额为0 2. B余额为10
+	if utxoDb.getBalance(publicKeyHashA) != 0 || utxoDb.getBalance(publicKeyHashB) != 10 {
+		t.Fatal("err")
+	}
+
+	// 交易数量为10
+	if utxoDb.countTransactions() != 10 {
+		t.Fatal("err")
+	}
+
+	// 将10笔交易的out B转给B
+
+	spendableInputs := utxoDb.getSpendableInputs(publicKeyHashB, 10)
+	if spendableInputs == nil {
+		t.Fatal("err")
+	}
+
+	txOuts = []TxOut{TxOut{10, publicKeyHashB}}
+	txId = getRandomBit(32)
+	utxoDb.update(*spendableInputs, txOuts, txId)
+
+	// B余额为10
+	if utxoDb.getBalance(publicKeyHashB) != 10 {
+		t.Fatal("err")
+	}
+
+	// 交易数量为1
+	if utxoDb.countTransactions() != 1 {
+		t.Fatal("err")
+	}
+}
+
 // 创造一个输出 (依赖in)
 func createTxWithIn(utxoDb *UtxoDb, txIn TxIn, transferAmount int, backOut *TxOut /*返还的*/) (publicKeyHash []byte, txId []byte) {
 	txId = getRandomBit(32)

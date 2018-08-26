@@ -60,8 +60,8 @@ for i := 0; i < 10; i++ {
 # 2. 实现列表
 
 * 存储结构map [txId] -> 有效的txOuts(serialized)
-* publicKeyHash -> 满足金额的可花费输出, `返回map` [txId]txOutIdx (用来建立新的tx的in所使用)
-* publicKeyHash -> 所有的可花费输出, `返回list` {txOut} (获取余额用)
+* publicKeyHash -> 满足金额的可花费输出,用来做新的交易的txIns
+* publicKeyHash -> 获取余额
 * 所有交易的数量
 * 根据blockchain重建utxo存储层  *
 * update (转账toWalletAddress时,`3种状态`更新fromWalletAddress)
