@@ -21,7 +21,9 @@ func (tx *Transaction) hash() []byte {
 
 	// 去除 3. Id
 	txTrimCopy.Id = nil
-	return txTrimCopy.serialize()
+
+	hashed := sha256.Sum256(txTrimCopy.serialize())
+	return hashed[:]
 }
 
 // a. 生成交易Id时使用: 不包括1. signature 2. PublicKey 3. Id
