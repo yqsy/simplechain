@@ -32,7 +32,7 @@
 一笔转账  
 ![](./pic/transfer_confirm.png)
 
-* walletAddress(Base58Encode): 32 hex (16 byte)
+* walletAddress(Base58Encode): 34 hex (17 byte)
 * publicKeyHash(SHA256+RIPEMD160): 40 hex (20 byte)
 * txId(SHA256): 64 hex (32 byte)
 
