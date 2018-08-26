@@ -95,7 +95,7 @@ func TestSimpleA(t *testing.T) {
 	}
 }
 
-// b. WalletAddr-B 部分转出, 那么这笔交易会保留部分
+// b. WalletAddr-B 转出, WalletAddr-A保留
 func TestSimpleB(t *testing.T) {
 	os.Remove(DbFileName)
 
@@ -143,7 +143,7 @@ func TestSimpleB(t *testing.T) {
 	// 交易3: 创建公钥哈希C, B => C
 	publicKeyHashC, txIdHash3 := createTxWithIn(utxoDb, TxIn{txIdHash2, 0}, 6, nil)
 
-	// 1. A可花费输出为4 2.B可花费输出为0 3.C可花费输出为6
+	// 1.A可花费输出为4 2.B可花费输出为0 3.C可花费输出为6
 	remainAmount, spendableOuts = utxoDb.findSpendableTxOutIdx(publicKeyHashA, 4)
 	if remainAmount != 4 {
 		t.Fatal("err")
@@ -183,6 +183,64 @@ func TestSimpleB(t *testing.T) {
 		t.Fatal("err")
 	}
 
+}
+
+// c. WalletAddr-A 转出, WalletAddr-B 保留
+func TestSimpleC(t *testing.T) {
+	os.Remove(DbFileName)
+
+	utxoDb := NewUtxoDb(DbFileName)
+	defer func() { os.Remove(DbFileName) }()
+
+	// 交易1: 创建公钥哈希A
+	publicKeyHashA, txIdHash1 := createTxOnlyOut(utxoDb, 10, t)
+
+	// 交易2: 创建公钥哈希B, A => B (转6余4)
+	publicKeyHashB, txIdHash2 := createTxWithIn(utxoDb, TxIn{txIdHash1, 0}, 6,
+		&TxOut{4, publicKeyHashA})
+
+	// 交易3: 创建公钥哈希C, A => C
+	publicKeyHashC, txIdHash3 := createTxWithIn(utxoDb, TxIn{txIdHash2, 1}, 4, nil)
+
+	// 1.A可花费输出为0 2.B可花费输出为6 3.C可花费输出为4
+	remainAmount, spendableOuts := utxoDb.findSpendableTxOutIdx(publicKeyHashA, 4)
+	if remainAmount != 0 {
+		t.Fatal("err")
+	}
+	spendableOutsEqual := make(map[string]int)
+	if !reflect.DeepEqual(spendableOuts, spendableOutsEqual) {
+		t.Fatal("err")
+	}
+
+	remainAmount, spendableOuts = utxoDb.findSpendableTxOutIdx(publicKeyHashB, 6)
+	if remainAmount != 6 {
+		t.Fatal("err")
+	}
+	spendableOutsEqual = make(map[string]int)
+	spendableOutsEqual[string(txIdHash2)] = 0
+	if !reflect.DeepEqual(spendableOuts, spendableOutsEqual) {
+		t.Fatal("err")
+	}
+
+	remainAmount, spendableOuts = utxoDb.findSpendableTxOutIdx(publicKeyHashC, 4)
+	if remainAmount != 4 {
+		t.Fatal("err")
+	}
+	spendableOutsEqual = make(map[string]int)
+	spendableOutsEqual[string(txIdHash3)] = 0
+	if !reflect.DeepEqual(spendableOuts, spendableOutsEqual) {
+		t.Fatal("err")
+	}
+
+	// 1. A余额为0 2. B余额为6 3. C余额为4
+	if utxoDb.getBalance(publicKeyHashA) != 0 || utxoDb.getBalance(publicKeyHashB) != 6 || utxoDb.getBalance(publicKeyHashC) != 4 {
+		t.Fatal("err")
+	}
+
+	// 交易数量为 2
+	if utxoDb.countTransactions() != 2 {
+		t.Fatal("err")
+	}
 }
 
 // 创造一个输出 (依赖in)
