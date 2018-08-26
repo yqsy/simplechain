@@ -32,9 +32,9 @@
 一笔转账  
 ![](./pic/transfer_confirm.png)
 
-* publicKeyHash(SHA256+RIPEMD160): 40 hex
-* walletAddress(Base58Encode): 32 hex
-* txId(SHA256): 64 hex
+* walletAddress(Base58Encode): 32 hex (16 byte)
+* publicKeyHash(SHA256+RIPEMD160): 40 hex (20 byte)
+* txId(SHA256): 64 hex (32 byte)
 
 <a id="markdown-3-实现列表" name="3-实现列表"></a>
 # 3. 实现列表

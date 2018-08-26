@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestTransaction(t *testing.T) {
 	// 假装3笔输出 作为资金来源

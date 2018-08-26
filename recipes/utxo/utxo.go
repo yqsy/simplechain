@@ -4,6 +4,7 @@ import (
 	"github.com/boltdb/bolt"
 	"bytes"
 	"encoding/gob"
+	"os"
 )
 
 const (
@@ -61,9 +62,26 @@ func DecodeTxOuts(txOutsBytes []byte) []TxOut {
 
 // 1. 没有 -> 创建数据库 2. 使用
 func NewUtxoDb(fileName string) *UtxoDb {
+	existsOriginal := false
+	if _, err := os.Stat(fileName); !os.IsNotExist(err) {
+		existsOriginal = true
+	}
+
 	if db, err := bolt.Open(fileName, 0600, nil); err != nil {
 		panic(err)
 	} else {
+		if !existsOriginal {
+			if err := db.Update(func(tx *bolt.Tx) error {
+				_, err := tx.CreateBucket([]byte(utxoBucket))
+				if err != nil {
+					panic(err)
+				}
+				return nil
+			}); err != nil {
+				panic(err)
+			}
+		}
+
 		return &UtxoDb{db: db}
 	}
 }
@@ -149,6 +167,17 @@ func (utxoDb *UtxoDb) findAllTxOut(publicKeyHash []byte) []TxOut {
 	}
 
 	return txOutResult
+}
+
+// 获取余额
+func (utxoDb *UtxoDb) getBalance(publicKeyHash []byte) int {
+	// TODO: 其实可以优化的
+	balance := 0
+	allTxOuts := utxoDb.findAllTxOut(publicKeyHash)
+	for _, txOut := range allTxOuts {
+		balance += txOut.Amount
+	}
+	return balance
 }
 
 // 得到所有有效tx数量
