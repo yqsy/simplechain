@@ -20,6 +20,9 @@
 流程图1-补充  
 ![](./pic/address-generation-extra.png)
 
+所有的钱包版本  
+![](./pic/all_base58_version.png)
+
 私钥,公钥,公钥哈希,钱包地址的关系  
 ![](./pic/relation.png)
 
@@ -32,8 +35,13 @@
 一笔转账  
 ![](./pic/transfer_confirm.png)
 
-* walletAddress(Base58Encode): 34 hex (17 byte)
+* privateKeyBytes: 64 hex (32 byte)
+* publicKeyBytes: 128 hex (64 byte)
 * publicKeyHash(SHA256+RIPEMD160): 40 hex (20 byte)
+* walletAddress(Base58Encode): 34 hex (17 byte)
+---
+* signature: 128 hex (64 byte)
+---
 * txId(SHA256): 64 hex (32 byte)
 
 <a id="markdown-3-实现列表" name="3-实现列表"></a>

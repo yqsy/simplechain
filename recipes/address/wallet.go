@@ -33,13 +33,18 @@ func generateKeyPair() (*ecdsa.PrivateKey, *ecdsa.PublicKey) {
 }
 
 // 获取公钥的bytes
-func getBytes(publicKey *ecdsa.PublicKey) []byte {
+func getPublicKeyBytes(publicKey *ecdsa.PublicKey) []byte {
 	return append(publicKey.X.Bytes(), publicKey.Y.Bytes()...)
+}
+
+// 获取私钥的bytes
+func getPrivateKeyBytes(privateKey *ecdsa.PrivateKey) []byte {
+	return privateKey.D.Bytes()
 }
 
 // 生成公钥哈希
 func generatePublicKeyHash(publicKey *ecdsa.PublicKey) []byte {
-	publicKeyBytes := getBytes(publicKey)
+	publicKeyBytes := getPublicKeyBytes(publicKey)
 	sha256Sum := sha256.Sum256(publicKeyBytes)
 	md := ripemd160.New()
 	if _, err := md.Write(sha256Sum[:]); err != nil {
@@ -106,6 +111,8 @@ func convertSignatureTors(signature []byte) (*big.Int, *big.Int) {
 type Wallet struct {
 	privateKey               *ecdsa.PrivateKey // 私钥
 	publicKey                *ecdsa.PublicKey  // 公钥
+	privateKeyBytes          []byte            // 私钥二进制数组
+	publicKeyBytes           []byte            // 公钥二进制数组
 	privateKeyEncoded        string            // 私钥x509 encode
 	publicKeyEncoded         string            // 公钥x509 encode
 	publicKeyHash            []byte            // 公钥hash
@@ -118,6 +125,8 @@ func NewWallet() *Wallet {
 	wallet := &Wallet{}
 	wallet.privateKey, wallet.publicKey = generateKeyPair()
 	wallet.privateKeyEncoded, wallet.publicKeyEncoded = encode(wallet.privateKey, wallet.publicKey)
+	wallet.privateKeyBytes = getPrivateKeyBytes(wallet.privateKey)
+	wallet.publicKeyBytes = getPublicKeyBytes(wallet.publicKey)
 	wallet.publicKeyHash = generatePublicKeyHash(wallet.publicKey)
 	wallet.publicKeyHashCheckSum = generatePublicKeyHashCheckSum(Version, wallet.publicKeyHash)
 	wallet.publicKeyHashCheckSumCut = wallet.publicKeyHashCheckSum[:CheckSumLen]
@@ -129,6 +138,8 @@ func (wallet *Wallet) String() string {
 	result := ""
 	result += fmt.Sprintf("%v\n\n", wallet.privateKeyEncoded)
 	result += fmt.Sprintf("%v\n\n", wallet.publicKeyEncoded)
+	result += fmt.Sprintf("privateKeyBytes: %x\n", wallet.privateKeyBytes)
+	result += fmt.Sprintf("publicKeyBytes: %x\n", wallet.publicKeyBytes)
 	result += fmt.Sprintf("version: %v\n", Version)
 	result += fmt.Sprintf("publickeyHash: %x\n", wallet.publicKeyHash)
 	result += fmt.Sprintf("publicKeyHashCheckSumCut: %x\n", wallet.publicKeyHashCheckSumCut)
