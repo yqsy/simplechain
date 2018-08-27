@@ -20,9 +20,6 @@
 流程图1-补充  
 ![](./pic/address-generation-extra.png)
 
-所有的钱包版本  
-![](./pic/all_base58_version.png)
-
 私钥,公钥,公钥哈希,钱包地址的关系  
 ![](./pic/relation.png)
 
@@ -36,18 +33,11 @@
 ![](./pic/transfer_confirm.png)
 
 
-类型|方式|hex长度|byte长度
--|-|-|-
-privateKeyBytes|ecdsa.GenerateKey|64|32
-publicKeyBytes|ecdsa.GenerateKey|128|64
-publicKeyHash|SHA256+RIPEMD160|40|20
-walletAddress|Base58Encode|`34`|17
-signature|ecdsa.Sign(私钥,hash(证书))|128|64
-txId|SHA256|64|32
 
 sign/verify:  
 * 私钥签名(hash(证书)) -> 签名
 * 公钥解密(签名) == hash(证书)
+
 
 <a id="markdown-3-实现列表" name="3-实现列表"></a>
 # 3. 实现列表
