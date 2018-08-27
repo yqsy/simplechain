@@ -35,14 +35,19 @@
 一笔转账  
 ![](./pic/transfer_confirm.png)
 
-* privateKeyBytes: 64 hex (32 byte)
-* publicKeyBytes: 128 hex (64 byte)
-* publicKeyHash(SHA256+RIPEMD160): 40 hex (20 byte)
-* walletAddress(Base58Encode): 34 hex (17 byte)
----
-* signature: 128 hex (64 byte)
----
-* txId(SHA256): 64 hex (32 byte)
+
+类型|方式|hex长度|byte长度
+-|-|-|-
+privateKeyBytes|ecdsa.GenerateKey|64|32
+publicKeyBytes|ecdsa.GenerateKey|128|64
+publicKeyHash|SHA256+RIPEMD160|40|20
+walletAddress|Base58Encode|`34`|17
+signature|ecdsa.Sign(私钥,hash(证书))|128|64
+txId|SHA256|64|32
+
+sign/verify:  
+* 私钥签名(hash(证书)) -> 签名
+* 公钥解密(签名) == hash(证书)
 
 <a id="markdown-3-实现列表" name="3-实现列表"></a>
 # 3. 实现列表
