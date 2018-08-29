@@ -62,7 +62,6 @@ base58-encode addr
 <a id="markdown-4-signverify" name="4-signverify"></a>
 # 4. sign/verify
 
-
 * 私钥签名(hash(证书)) -> 签名
 * 公钥解密(签名) == hash(证书)
 

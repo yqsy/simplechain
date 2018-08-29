@@ -16,9 +16,9 @@ func TestTransaction(t *testing.T) {
 	walletB := NewWallet()
 
 	// 构建当前交易的3个in和2个out
-	txInA1 := TxIn{txPreOutA1Tx.Id, 0, nil, convertPublicKeyToBytes(walletA.publicKey)}
-	txInA2 := TxIn{txPreOutA2Tx.Id, 0, nil, convertPublicKeyToBytes(walletA.publicKey)}
-	txInA3 := TxIn{txPreOutA3Tx.Id, 0, nil, convertPublicKeyToBytes(walletA.publicKey)}
+	txInA1 := TxIn{txPreOutA1Tx.Id, 0, nil, walletA.publicKeyBytes}
+	txInA2 := TxIn{txPreOutA2Tx.Id, 0, nil, walletA.publicKeyBytes}
+	txInA3 := TxIn{txPreOutA3Tx.Id, 0, nil, walletA.publicKeyBytes}
 	txOutB1 := TxOut{55, walletB.publicKeyHash}
 	txOutA1 := TxOut{5, walletA.publicKeyHash}
 
@@ -32,7 +32,7 @@ func TestTransaction(t *testing.T) {
 	preTxMap[string(txPreOutA3Tx.Id)] = txPreOutA3Tx
 
 	// 签名
-	curTx.signTxs(preTxMap, walletA.privateKey)
+	curTx.signTxs(preTxMap,walletA.privateKey)
 
 	// 验证
 	if !curTx.verifyTxs(preTxMap) {
