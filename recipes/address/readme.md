@@ -57,7 +57,11 @@ txId|SHA256|64|32
 base58-encode addr  
 ![](./pic/all_base58_version.png)
 
+我的梳理:  
+![](./pic/all_bitcoinaddress.png)
 
+* 绿色方框为表达方式,压缩和未压缩是`两条路线`
+* 钱包只修要私钥就可以推出来其他所有的数据
 
 <a id="markdown-4-signverify" name="4-signverify"></a>
 # 4. sign/verify
