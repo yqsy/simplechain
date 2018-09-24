@@ -10,6 +10,8 @@ import (
 
 	"golang.org/x/crypto/ripemd160"
 	"github.com/yqsy/simplechain/base58"
+
+	//  TODO: 挪掉ethereum
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
