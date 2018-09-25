@@ -7,12 +7,14 @@ type Node struct {
 	sig         []byte
 }
 
+// 生成叶子节点
 func NewLeafNode(sig []byte) *Node {
 	leaf := &Node{}
 	leaf.sig = sig
 	return leaf
 }
 
+// 生成非叶子节点
 func NewParentNode(left, right *Node) *Node {
 	parent := &Node{}
 
@@ -43,7 +45,7 @@ func ButtomLevelNodes(sigs [][]byte) []*Node {
 		parents = append(parents, parentNode)
 	}
 
-	if len(sigs)/2 != 0 {
+	if len(sigs) % 2 != 0 {
 		leftNode := NewLeafNode(sigs[len(sigs)-1])
 		parentNode := NewParentNode(leftNode, nil)
 		parents = append(parents, parentNode)
@@ -61,7 +63,7 @@ func InternalLevelNodes(nodes []*Node) []*Node {
 		parents = append(parents, parentNode)
 	}
 
-	if len(nodes)/2 != 0 {
+	if len(nodes) % 2 != 0 {
 		parentNode := NewParentNode(nodes[len(nodes)-1], nil)
 		parents = append(parents, parentNode)
 	}
@@ -96,10 +98,22 @@ func NewTree(sigs [][]byte) *Tree {
 		tree.nodesNum += len(parents)
 	}
 
-	if len(parents) != 0 {
+	if len(parents) != 1 {
 		panic("no root node")
 	}
 
 	tree.head = parents[0]
 	return tree
+}
+
+func (tree *Tree) GetNodesNum() int {
+	return tree.nodesNum
+}
+
+func (tree *Tree) GetDepth() int {
+	return tree.depth
+}
+
+func (tree *Tree) GetRoot() *Node {
+	return tree.head
 }

@@ -1,6 +1,37 @@
 package merkletree
 
-import "testing"
+import (
+	"crypto/sha256"
+	"reflect"
+	"testing"
+)
+
+func create2EleTree() *Tree {
+	tree := NewTree([][]byte{
+		[]byte("52e422506d8238ef3196b41db4c41ee0afd659b6"),
+		[]byte("6d0b51991ac3806192f3cb524a5a5d73ebdaacf8"),
+	})
+	return tree
+}
+
+func create3EleTree() *Tree {
+	tree := NewTree([][]byte{
+		[]byte("52e422506d8238ef3196b41db4c41ee0afd659b6"),
+		[]byte("6d0b51991ac3806192f3cb524a5a5d73ebdaacf8"),
+		[]byte("461848c8b70e5a57bd94008b2622796ec26db657"),
+	})
+	return tree
+}
+
+func create4EleTree() *Tree {
+	tree := NewTree([][]byte{
+		[]byte("52e422506d8238ef3196b41db4c41ee0afd659b6"),
+		[]byte("6d0b51991ac3806192f3cb524a5a5d73ebdaacf8"),
+		[]byte("461848c8b70e5a57bd94008b2622796ec26db657"),
+		[]byte("c938037dc70d107b3386a86df7fef17a9983cf53"),
+	})
+	return tree
+}
 
 func create10EleTree() *Tree {
 	tree := NewTree([][]byte{
@@ -18,8 +49,48 @@ func create10EleTree() *Tree {
 	return tree
 }
 
-func TestSimple(t *testing.T) {
+func Test2Nodes(t *testing.T) {
+	tree := create2EleTree()
+	if tree.GetDepth() != 1 || tree.GetNodesNum() != 1 {
+		t.Fatal("err")
+	}
+	tmpsha256 := sha256.Sum256(append([]byte("52e422506d8238ef3196b41db4c41ee0afd659b6"), []byte("6d0b51991ac3806192f3cb524a5a5d73ebdaacf8")...))
+	if !reflect.DeepEqual(tree.GetRoot().sig, tmpsha256[:]) {
+		t.Fatal("err")
+	}
+}
 
+func Test3Nodes(t *testing.T) {
+	tree := create3EleTree()
 
+	if tree.GetDepth() != 2 || tree.GetNodesNum() != 3 {
+		t.Fatal("err")
+	}
+	tmpsha2561 := sha256.Sum256(append([]byte("52e422506d8238ef3196b41db4c41ee0afd659b6"), []byte("6d0b51991ac3806192f3cb524a5a5d73ebdaacf8")...))
+	tmpsha2562 := []byte("461848c8b70e5a57bd94008b2622796ec26db657")
+	tmpsha2563 := sha256.Sum256(append(tmpsha2561[:], tmpsha2562...))
+	if !reflect.DeepEqual(tree.GetRoot().sig, tmpsha2563[:]) {
+		t.Fatal("err")
+	}
+}
 
+func Test4Nodes(t *testing.T) {
+	tree := create4EleTree()
+
+	if tree.GetDepth() != 2 || tree.GetNodesNum() != 3 {
+		t.Fatal("err")
+	}
+	tmpsha2561 := sha256.Sum256(append([]byte("52e422506d8238ef3196b41db4c41ee0afd659b6"), []byte("6d0b51991ac3806192f3cb524a5a5d73ebdaacf8")...))
+	tmpsha2562 := sha256.Sum256(append([]byte("461848c8b70e5a57bd94008b2622796ec26db657"), []byte("c938037dc70d107b3386a86df7fef17a9983cf53")...))
+	tmpsha2563 := sha256.Sum256(append(tmpsha2561[:], tmpsha2562[:]...))
+	if !reflect.DeepEqual(tree.GetRoot().sig, tmpsha2563[:]) {
+		t.Fatal("err")
+	}
+}
+
+func Test10Nodes(t *testing.T) {
+	tree := create10EleTree()
+	if tree.GetDepth() != 4 || tree.GetNodesNum() != 11 {
+		t.Fatal("err")
+	}
 }
