@@ -13,6 +13,8 @@
 * https://en.bitcoin.it/wiki/Script
 * https://en.bitcoin.it/wiki/Transaction (P2PkH P2SH)
 
+
+
 <a id="markdown-2-一个认证" name="2-一个认证"></a>
 # 2. 一个认证
 

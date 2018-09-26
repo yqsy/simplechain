@@ -3,7 +3,8 @@
 - [1. 说明](#1-说明)
     - [1.1. 更新维度](#11-更新维度)
     - [1.2. 连续转账维度](#12-连续转账维度)
-- [2. 实现列表](#2-实现列表)
+- [2. deep](#2-deep)
+- [3. 实现列表](#3-实现列表)
 
 <!-- /TOC -->
 
@@ -56,8 +57,17 @@ for i := 0; i < 10; i++ {
 
 * `足以满足转账需求`的未花费输出都会被利用并且清除冗余
 
-<a id="markdown-2-实现列表" name="2-实现列表"></a>
-# 2. 实现列表
+<a id="markdown-2-deep" name="2-deep"></a>
+# 2. deep
+
+UTXO (deep)  
+![](./pic/utxo.png)
+
+UTXO(未消费的交易输出)  
+![](./pic/transactions-diagram.png)
+
+<a id="markdown-3-实现列表" name="3-实现列表"></a>
+# 3. 实现列表
 
 * 存储结构map [txId] -> 有效的txOuts(serialized)
 * publicKeyHash -> 满足金额的可花费输出,用来做新的交易的txIns
