@@ -75,3 +75,4 @@ UTXO(未消费的交易输出)
 * 所有交易的数量
 * 根据blockchain重建utxo存储层  *
 * update (转账toWalletAddress时,`3种状态`更新fromWalletAddress)
+ 

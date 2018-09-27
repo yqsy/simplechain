@@ -14,6 +14,3 @@
 # 参考的项目
 go get github.com/Jeiwan/blockchain_go
 ```
-
-增加区块(着重PoW过程)  
-![](./pic/blockchain_sequnce.png)

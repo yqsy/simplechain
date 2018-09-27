@@ -7,6 +7,10 @@ type Node struct {
 	sig         []byte
 }
 
+func (node *Node) GetSig() []byte {
+	return node.sig
+}
+
 // 生成叶子节点
 func NewLeafNode(sig []byte) *Node {
 	leaf := &Node{}
@@ -45,7 +49,7 @@ func ButtomLevelNodes(sigs [][]byte) []*Node {
 		parents = append(parents, parentNode)
 	}
 
-	if len(sigs) % 2 != 0 {
+	if len(sigs)%2 != 0 {
 		leftNode := NewLeafNode(sigs[len(sigs)-1])
 		parentNode := NewParentNode(leftNode, nil)
 		parents = append(parents, parentNode)
@@ -63,7 +67,7 @@ func InternalLevelNodes(nodes []*Node) []*Node {
 		parents = append(parents, parentNode)
 	}
 
-	if len(nodes) % 2 != 0 {
+	if len(nodes)%2 != 0 {
 		parentNode := NewParentNode(nodes[len(nodes)-1], nil)
 		parents = append(parents, parentNode)
 	}
