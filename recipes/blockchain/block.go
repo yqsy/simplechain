@@ -3,6 +3,7 @@ package blockchain
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"github.com/yqsy/simplechain/recipes/merkletree"
 	"math/rand"
 	"time"
@@ -57,12 +58,16 @@ type Block struct {
 	// 本块计算出来的哈希 (比特币中没有这项)
 	Hash []byte
 
+	// 本块的高度 (比特币中没有这项)
+	Height int32
+
 	// 交易数据(全节点和矿工才会存储)
 	Txs []*Transaction
 }
 
-func NewBlock(prevBlockHash []byte, txs []*Transaction) *Block {
+func NewBlock(prevBlockHash []byte, height int32, txs []*Transaction) *Block {
 	merkleRootHash := getTxsMerkleRoot(txs)
+
 
 	block := &Block{
 		Version:              0,
@@ -71,6 +76,7 @@ func NewBlock(prevBlockHash []byte, txs []*Transaction) *Block {
 		TimeStamp:            time.Now().Unix(),    // TODO 是计算hash前就生成时间的吗?
 		DifficultyDegreeBits: DifficultyDegreeBits, // TODO 固定难度. f(全网算力,难度) = 求解时间. 随着算力的增长,难度必须同时增长,才能保证出块时间稳定.
 		Nonce:                0,
+		Height:               height,
 		Txs:                  txs,
 	}
 
@@ -97,4 +103,17 @@ func DeserializeBlock(d []byte) *Block {
 		panic(err)
 	}
 	return &block
+}
+
+func (block *Block) String() string {
+	result := ""
+	result += fmt.Sprintf("Version: %v\n", block.Version)
+	result += fmt.Sprintf("PrevBlockHash: %x\n", block.PrevBlockHash)
+	result += fmt.Sprintf("MerkleRootHash: %x\n", block.MerkleRootHash)
+	result += fmt.Sprintf("TimeStamp: %v\n", block.TimeStamp)
+	result += fmt.Sprintf("DifficultyDegreeBits: %v\n", block.DifficultyDegreeBits)
+	result += fmt.Sprintf("Nonce: %v\n", block.Nonce)
+	result += fmt.Sprintf("Height: %v\n", block.Height)
+	result += fmt.Sprintf("txs: %v\n", len(block.Txs))
+	return result
 }

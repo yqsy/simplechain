@@ -24,7 +24,7 @@ func CreateBlockChain(nodeId string) *BlockChain {
 	}
 
 	// 创世交易块,就不放奖励了
-	coinBaseBlock := NewBlock([]byte{}, []*Transaction{NewTransaction()})
+	coinBaseBlock := NewBlock([]byte{}, 0, []*Transaction{NewTransaction()})
 
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
@@ -119,20 +119,32 @@ func (bc *BlockChain) GetBlockHashes() {
 
 func (bc *BlockChain) MineBlock(txs []*Transaction) *Block {
 	var lastHash []byte
+	var lastBlock *Block
 
 	if err := bc.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BlockBucket))
 		if b == nil {
 			panic("err")
 		}
-		lastHash = b.Get([]byte("l"))
+		//lastHash = b.Get([]byte("l"))
+
+		// TODO go语言的编译器有问题,这里的闭包有内存错误
+		tmp := b.Get([]byte("l"))
+
+		lastHash = make([]byte, len(tmp))
+		copy(lastHash, tmp)
+
+		lastBlockBytes := b.Get(lastHash)
+
+		lastBlock = DeserializeBlock(lastBlockBytes)
+
 		return nil
 	}); err != nil {
 		panic(err)
 	}
 
 	// 挖矿!
-	newBlock := NewBlock(lastHash, txs)
+	newBlock := NewBlock(lastHash, lastBlock.Height+1, txs)
 
 	if err := bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BlockBucket))

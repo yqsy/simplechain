@@ -14,8 +14,10 @@ func TestMine(t *testing.T) {
 	}()
 
 	for i := 0; i < 10; i++ {
+		fmt.Printf("=================\n")
 		newBlock := blockChain.MineBlock([]*Transaction{})
 
-		fmt.Printf("nonce: %v hash: %x\n", newBlock.Nonce, newBlock.Hash)
+
+		fmt.Printf("%v", newBlock)
 	}
 }

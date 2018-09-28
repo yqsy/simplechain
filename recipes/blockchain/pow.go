@@ -50,7 +50,7 @@ func (pow *ProofOfWork) prepareData(nonce int64) []byte {
 }
 
 func (pow *ProofOfWork) Run() (int64, []byte) {
-	var nonce int64
+	var nonce int64 = 0
 	var hash [32]byte
 
 	for nonce < MaxNonce {
