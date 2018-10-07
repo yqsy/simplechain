@@ -17,8 +17,12 @@ recipes项目对simple chain实现所用到的技术/依赖做一个简单的实
 * [merkletree(spv轻量验证)](merkletree)
 * [blockchain(区块/区块链)](blockchain)
 * [proofofwork(工作量证明)](blockchain)
-* [p2p(点对点网络)](p2p)
-* [cli(命令行接口)](cli)
-* [rpc(rpc接口)](rpc)
-* [scan(浏览器)](scan)
-* [mask(钱包)](mask)
+* p2p(点对点网络)(p2p)
+* cli(命令行接口)(cli)
+* rpc(rpc接口)(rpc)
+* scan(浏览器)(scan)
+* mask(钱包)(mask)
+
+---
+
+* [cppserialize(c++序列化,反序列化demo)](cppserialize)
