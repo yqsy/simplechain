@@ -5,5 +5,5 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(/mnt/disk1/go/src/github.com/yqsy/simplechain/recipes/cppserialize)
 
-add_executable(cppserialize main.cpp serialize.h)
+add_executable(cppserialize main.cpp serialize.h streams.h)
 
