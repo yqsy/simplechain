@@ -30,9 +30,6 @@ inline T *NCONST_PTR(const T *val) {
 #define READWRITE(...) (::SerReadWriteMany(s, ser_action, __VA_ARGS__))
 
 
-// 类增加 1. 序列化 2. 反序列化 函数
-// TODO
-
 // 内存整数 -> 小端法输出二进制
 template<typename Stream>
 inline void ser_writedata8(Stream &s, uint8_t obj) {
@@ -127,7 +124,7 @@ inline double ser_uint64_to_double(uint64_t y) {
 }
 
 
-// 序列化
+// 基础类型序列化
 template<typename Stream>
 inline void Serialize(Stream &s, int8_t a) { ser_writedata8(s, a); };
 
@@ -159,7 +156,7 @@ template<typename Stream>
 inline void Serialize(Stream &s, double a) { ser_writedata64(s, ser_double_to_uint64(a)); };
 
 
-// 反序列化
+// 基础类型反序列化
 template<typename Stream>
 inline void Unserialize(Stream &s, int8_t &a) { a = ser_readdata8(s); };
 
@@ -190,6 +187,19 @@ inline void Unserialize(Stream &s, float &a) { a = ser_uint32_to_float(ser_readd
 template<typename Stream>
 inline void Unserialize(Stream &s, double &a) { a = ser_uint64_to_double(ser_readdata64(s)); };
 
+// 模板匹配
+template<typename Stream, typename T>
+inline void Serialize(Stream &os, const T& a)
+{
+    a.Serialize(os);
+}
+
+
+template<typename Stream, typename T>
+inline void Unserialize(Stream &is, T&& a)
+{
+    a.Unserialize(is);
+}
 
 // 编译期动作模板
 struct CSerActionSerialize {
@@ -217,9 +227,9 @@ void UnserializeMany(Stream &s) {
 
 }
 
-// TODO: 为什么bitcoin的serialize用右值? 是bitcoin的语法错误吧!
+
 template<typename Stream, typename Arg, typename ... Args>
-void UnserializeMany(Stream &s, Arg &arg, Args &... args) {
+void UnserializeMany(Stream &s, Arg && arg, Args &&... args) {
     ::Unserialize(s, arg);
     ::UnserializeMany(s, args...);
 }
@@ -231,7 +241,7 @@ inline void SerReadWriteMany(Stream &s, CSerActionSerialize ser_action, const Ar
 
 
 template<typename Stream, typename... Args>
-inline void SerReadWriteMany(Stream &s, CSerActionUnserialize ser_action, const Args &... args) {
+inline void SerReadWriteMany(Stream &s, CSerActionUnserialize ser_action, Args &&... args) {
     ::UnserializeMany(s, args...);
 }
 

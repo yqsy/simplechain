@@ -28,9 +28,9 @@ public:
         return (*this);
     }
 
-    // TODO: 为什么bitcoin的operator>>用右值? 是bitcoin的语法错误吧!
+
     template<typename T>
-    CDataStream &operator>>(T &obj) {
+    CDataStream &operator>>(T &&obj) {
         ::Unserialize(*this, obj);
         return (*this);
     }

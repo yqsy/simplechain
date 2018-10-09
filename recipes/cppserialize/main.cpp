@@ -23,42 +23,39 @@ public:
         READWRITE(nBits);
         READWRITE(nNonce);
     }
-
 };
 
 
 void SimpleTest() {
     int32_t a, b;
-
     a = 1;
-
     CDataStream s;
-
     s << 1;
-
     s >> b;
-
     if (b != 1) {
         throw std::ios_base::failure("b do not equal 1");
     }
 }
 
+void StructTest() {
+    CBlockHeader a, b;
+    a.nVersion = 1;
+    a.nTime = 2;
+    a.nBits = 3;
+    a.nNonce = 4;
+
+    CDataStream s;
+    s << a;
+    s >> b;
+
+    if (b.nVersion != 1 || b.nTime != 2 || b.nBits != 3 || b.nNonce != 4) {
+        throw std::ios_base::failure("struct test error");
+    }
+
+}
+
 int main() {
     SimpleTest();
-
-//    CBlockHeader b1, b2;
-//
-//    b1.nVersion = 1;
-//    b1.nTime = 2;
-//    b1.nBits = 3;
-//    b1.nNonce = 4;
-
-//    CDataStream s;
-//    s << b1;
-//
-//    s >> b2;
-
-
-
+    StructTest();
     return 0;
 }
