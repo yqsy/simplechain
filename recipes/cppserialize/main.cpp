@@ -1,9 +1,11 @@
 #include <iostream>
 #include <stdint.h>
 
+#include <vector>
 
 #include <serialize.h>
 #include <streams.h>
+#include <transaction.h>
 
 class CBlockHeader {
 public:
@@ -24,7 +26,6 @@ public:
         READWRITE(nNonce);
     }
 };
-
 
 void SimpleTest() {
     int32_t a, b;
@@ -51,11 +52,44 @@ void StructTest() {
     if (b.nVersion != 1 || b.nTime != 2 || b.nBits != 3 || b.nNonce != 4) {
         throw std::ios_base::failure("struct test error");
     }
-
 }
+
+void VectorTest() {
+    std::vector<int> v{1, 2, 3};
+
+    std::vector<int> v2;
+
+    CDataStream s;
+
+    s << v;
+    s >> v2;
+
+    for (auto &ele: v2) {
+        std::cout << ele << std::endl;
+    }
+}
+
+void TransactionTest() {
+    std::vector<CTransactionRef> vtx;
+
+    std::vector<CTransactionRef> vtx2;
+
+    vtx.push_back(std::make_shared<CTransaction>(CMutableTransaction()));
+
+    CDataStream s;
+
+    s << vtx;
+
+    s >> vtx2;
+
+    std::cout << vtx2[0]->nVersion << std::endl;
+}
+
 
 int main() {
     SimpleTest();
     StructTest();
+    VectorTest();
+    TransactionTest();
     return 0;
 }
