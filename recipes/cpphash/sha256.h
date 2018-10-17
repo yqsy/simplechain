@@ -81,15 +81,15 @@ void hash256_block(RaIter1 message_digest, RaIter2 first, RaIter2 last) {
     // Raiter2: std::vector<uint8_t>::iterator
     uint32_t w[64] = {};
     for (int i = 0; i < 16; ++i) {
-        w[i] = static_cast<uint32_t >(mask_8bit(*(first + i * 4))) << 24 |
-               static_cast<uint32_t >(mask_8bit(*(first + i * 4 + 1))) << 16 |
-               static_cast<uint32_t >(mask_8bit(*(first + i * 4 + 2))) << 8 |
-               static_cast<uint32_t >(mask_8bit(*(first + i * 4 + 3)));
+        w[i] = (static_cast<uint32_t >(mask_8bit(*(first + i * 4))) << 24) |
+               (static_cast<uint32_t >(mask_8bit(*(first + i * 4 + 1))) << 16) |
+               (static_cast<uint32_t >(mask_8bit(*(first + i * 4 + 2))) << 8) |
+               (static_cast<uint32_t >(mask_8bit(*(first + i * 4 + 3))));
     }
 
     // 5. 补充剩下w[16..64)
     // SSIG1(W(t-2)) + W(t-7) + SSIG0(w(t-15)) + W(t-16)
-    for (int i = 0; i < 64; i++) {
+    for (int i = 16; i < 64; ++i) {
         w[i] = mask_32bit(ssig1(w[i - 2]) + w[i - 7] + ssig0(w[i - 15]) + w[i - 16]);
     }
 
@@ -128,6 +128,7 @@ void hash256_block(RaIter1 message_digest, RaIter2 first, RaIter2 last) {
     *(message_digest + 5) += f;
     *(message_digest + 6) += g;
     *(message_digest + 7) += h;
+
     for (int i = 0; i < 8; ++i) {
         *(message_digest + i) = mask_32bit(*(message_digest + i));
     }
@@ -181,8 +182,8 @@ public:
 
         assert(buffer_.size() % 56 == 0);
 
-        uint8_t *pr = (uint8_t *) (data_length_);
-        for (int i = 0; i < 8; ++i, ++pr) {
+        uint8_t *pr = (uint8_t *) (&data_length_);
+        for (int i = 0; i < 8; ++i) {
             buffer_.push_back(pr[i]);
         }
 
