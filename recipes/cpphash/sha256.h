@@ -80,6 +80,7 @@ void hash256_block(RaIter1 message_digest, RaIter2 first, RaIter2 last) {
     // TODO: 这里我不太明白为什么要变成大端法? 因为本质原生的字节序也没有指明? 默认小?
     // Raiter2: std::vector<uint8_t>::iterator
     uint32_t w[64] = {};
+    std::fill(w, w + 64, 0);
     for (int i = 0; i < 16; ++i) {
         w[i] = (static_cast<uint32_t >(mask_8bit(*(first + i * 4))) << 24) |
                (static_cast<uint32_t >(mask_8bit(*(first + i * 4 + 1))) << 16) |
@@ -144,8 +145,46 @@ private:
     // 8个32位散列值, 也是最终结果
     uint32_t h_[8];
 
-    // big-endian 数据长度
-    uint64_t data_length_;
+    // big-endian 数据长度??
+    uint32_t data_length_digits_[4];
+
+private:
+    void add_to_data_length(uint32_t n) {
+        uint32_t carry = 0;
+        data_length_digits_[0] += n;
+        for (std::size_t i = 0; i < 4; ++i) {
+            data_length_digits_[i] += carry;
+            if (data_length_digits_[i] >= 65536u) {
+                carry = data_length_digits_[i] >> 16;
+                data_length_digits_[i] &= 65535u;
+            } else {
+                break;
+            }
+        }
+    }
+
+    void write_data_bit_length(uint8_t *begin) {
+        uint32_t data_bit_length_digits[4];
+        std::copy(data_length_digits_, data_length_digits_ + 4,
+                  data_bit_length_digits);
+
+        // convert byte length to bit length (multiply 8 or shift 3 times left)
+        uint32_t carry = 0;
+        for (std::size_t i = 0; i < 4; ++i) {
+            uint32_t before_val = data_bit_length_digits[i];
+            data_bit_length_digits[i] <<= 3;
+            data_bit_length_digits[i] |= carry;
+            data_bit_length_digits[i] &= 65535u;
+            carry = (before_val >> (16 - 3)) & 65535u;
+        }
+
+        // write data_bit_length
+        for (int i = 3; i >= 0; --i) {
+            (*begin++) = static_cast<uint8_t>(data_bit_length_digits[i] >> 8);
+            (*begin++) = static_cast<uint8_t>(data_bit_length_digits[i]);
+        }
+    }
+
 public:
 
     hash256_one_by_one() {
@@ -157,34 +196,38 @@ public:
     void process(RaIter first, RaIter last) {
 
         // 长度的大端字节序
-        data_length_ = htobe64(std::distance(first, last));
+        add_to_data_length(static_cast<uint32_t >(std::distance(first, last)));
+
         std::copy(first, last, std::back_inserter(buffer_));
 
         // 3. A. 填充1个'1'  B. 填充k bits '0'到达满 448 bit ([0,56) byte)C. 填充余下64bit为大端长度 ([56,64))
 
-        buffer_.push_back(uint8_t('1'));
+        buffer_.push_back(uint8_t(0x80));
 
         // 56 byte = 448 bit, 64byte = 512 bit
         size_t remain = buffer_.size() % 64;
 
         if (remain < 56) {
             for (int i = 0; i < 56 - remain; ++i) {
-                buffer_.push_back(uint8_t('0'));
+                buffer_.push_back(uint8_t(0));
             }
         } else if (remain > 56) {
             for (int i = 0; i < 64 - remain; ++i) {
-                buffer_.push_back(uint8_t('0'));
+                buffer_.push_back(uint8_t(0));
             }
-            for (int i = 0; i < 56 - remain; ++i) {
-                buffer_.push_back(uint8_t('0'));
+            for (int i = 0; i < 56; ++i) {
+                buffer_.push_back(uint8_t(0));
             }
         }
 
-        assert(buffer_.size() % 56 == 0);
+        assert(buffer_.size() % 64 / 56 == 1);
 
-        uint8_t *pr = (uint8_t *) (&data_length_);
-        for (int i = 0; i < 8; ++i) {
-            buffer_.push_back(pr[i]);
+        uint8_t tmp[8] = {};
+
+        write_data_bit_length(&tmp[0]);
+
+        for (auto &ele : tmp) {
+            buffer_.push_back(ele);
         }
 
         assert(buffer_.size() % 64 == 0);
