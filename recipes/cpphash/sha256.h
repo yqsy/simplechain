@@ -22,11 +22,11 @@
 // hash到的目的容器的大小(字节) 32 * 8 = 256位
 static const size_t k_digest_size = 32;
 
-// 1. 初始散列值,取值为前8个质数的平方根的小数部分的前32位
-// h0 ~ h7
-const uint32_t initial_message_digest[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372,
-                                            0xa54ff53a, 0x510e527f, 0x9b05688c,
-                                            0x1f83d9ab, 0x5be0cd19};
+
+inline uint8_t mask_8bit(uint8_t x) { return x & 0xff; }
+
+inline uint32_t mask_32bit(uint32_t x) { return x & 0xffffffff; }
+
 
 // 2. 64个32位的常数序列,取值为前64个质数的立方根的小数部分的前32位
 // K[0..63]
@@ -43,10 +43,12 @@ const uint32_t add_constant[64] = {
         0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
         0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
+// 1. 初始散列值,取值为前8个质数的平方根的小数部分的前32位
+// h0 ~ h7
+const uint32_t initial_message_digest[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372,
+                                            0xa54ff53a, 0x510e527f, 0x9b05688c,
+                                            0x1f83d9ab, 0x5be0cd19};
 
-inline uint8_t mask_8bit(uint8_t x) { return x & 0xff; }
-
-inline uint32_t mask_32bit(uint32_t x) { return x & 0xffffffff; }
 
 inline uint32_t ch(uint32_t x, uint32_t y, uint32_t z) { return (x & y) ^ ((~x) & z); }
 
