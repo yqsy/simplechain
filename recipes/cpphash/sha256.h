@@ -79,7 +79,7 @@ void hash256_block(RaIter1 message_digest, RaIter2 first, RaIter2 last) {
     // 4. 512bit(64byte)的分组分成16个部分(每组4byte,大端法)生成w[0..16)
     // TODO: 这里我不太明白为什么要变成大端法? 因为本质原生的字节序也没有指明? 默认小?
     // Raiter2: std::vector<uint8_t>::iterator
-    uint32_t w[64] = {};
+    uint32_t w[64];
     std::fill(w, w + 64, 0);
     for (int i = 0; i < 16; ++i) {
         w[i] = (static_cast<uint32_t >(mask_8bit(*(first + i * 4))) << 24) |
